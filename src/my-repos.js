@@ -1,20 +1,7 @@
 import React, { Component } from "react";
 import { Query } from "react-apollo";
-import { gql } from "apollo-boost";
-
-const reposQuery = gql`
-  query Myrepositories($first: Int!) {
-    viewer {
-      repositories(first: $first) {
-        edges {
-          node {
-            name
-          }
-        }
-      }
-    }
-  }
-`;
+import Displayrepos from "./display-repos";
+import { reposQuery } from "./queries";
 
 class Myrepos extends Component {
   handleMore = (data, fetchMore, current) => {
@@ -24,7 +11,7 @@ class Myrepos extends Component {
         if (!fetchMoreResult) {
           return prev;
         }
-        return Object.assign(prev, fetchMoreResult);
+        return { ...prev, ...fetchMoreResult };
       }
     });
   };
@@ -32,22 +19,19 @@ class Myrepos extends Component {
   render() {
     return (
       <Query query={reposQuery} variables={{ first: 10 }}>
-        {({ data, loading, error, fetchMore }) => {
-          if (loading) return <p>Loading</p>;
+        {({ data, loading, error, fetchMore, refetch }) => {
+          if (loading) return <p>loading...</p>;
           if (error) return <p>{error.message}</p>;
+
           let current = data.viewer.repositories.edges.length;
+
           return (
-            <div>
-              <ul>
-                <h2>First {current} Repos</h2>
-                {data.viewer.repositories.edges.map(({ node }) => (
-                  <li key={node.name}>{node.name}</li>
-                ))}
-              </ul>
-              <button onClick={() => this.handleMore(data, fetchMore, current)}>
-                load more
-              </button>
-            </div>
+            <Displayrepos
+              current={current}
+              refetch={refetch}
+              data={data}
+              handleMore={() => this.handleMore(data, fetchMore, current)}
+            />
           );
         }}
       </Query>
